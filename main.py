@@ -4,16 +4,15 @@ from pyroute2 import IPRoute, IPDB
 
 
 def sniffing_func():
-    event = "RTM_NEWADDR"
+    event_list = ["RTM_NEWADDR", "RTM_NEWROUTE"]
     with IPRoute() as ipr:
         # With IPRoute objects you have to call bind() manually
         ipr.bind()
         while True:
             for message in ipr.get():
                 print(message)
-               # if message['event'] == event:
-
-                #    print("***** A new ipv6 address has being added: " + message['attrs'][0][1] + "*****")
+                if message['event'] in event_list:
+                    print("\n\n\n***** A new ipv6 address has being added: " + message['attrs'][0]+";"+  message['attrs'][0]+ "*****\n\n\n")
 
 
 def add_ipv6(address, interface):
