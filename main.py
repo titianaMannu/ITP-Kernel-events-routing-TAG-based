@@ -12,7 +12,8 @@ def sniffing_func():
             for message in ipr.get():
                 print(message)
                 if message['event'] in event_list:
-                    print("\n\n\n***** A new ipv6 address has being added: " + message['attrs'][0]+";"+  message['attrs'][0]+ "*****\n\n\n")
+                    print("\n\n\n***** A new ipv6 address has being added: " + ''.join(message['attrs'][0]) + ";" +
+                          ''.join(message['attrs'][1]) + "*****\n\n\n")
 
 
 def add_ipv6(address, interface):
