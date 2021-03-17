@@ -7,11 +7,13 @@ import socket
 
 
 def export_ipv6_tunnel_addresses(segment_dictionary):
+    my_sid = []
     attribute_list = segment_dictionary['attrs']
     for elem in attribute_list:
         if elem[0] == 'SEG6_IPTUNNEL_SRH':
             my_sid = elem[1]['segs']
             break
+    print("***** list of sid *****")
     for elem in my_sid:
         print(elem)
 
@@ -71,7 +73,7 @@ def sniffing_func():
                             export_ipv6_tunnel_addresses(attribute[1])
                             continue
                         if attribute[0] in attribute_list and attribute[1] not in address_list:
-                            print("\n\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****\n\n\n")
+                            print("\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****\n\n")
                             address_list.append(attribute[1])
 
 
