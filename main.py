@@ -20,7 +20,6 @@ def pop_tag(ipv6, pos_to_replace):
     ipv4_str = ipv6_list[pos_to_replace] + ipv6_list[pos_to_replace + 1]
     addr_long = int(ipv4_str, 16)
     ipv4 = str(socket.inet_ntoa(struct.pack(">L", addr_long)))
-    print(ipv4)
     return ipv4
 
 
