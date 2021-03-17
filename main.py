@@ -6,6 +6,16 @@ import binascii
 import socket
 
 
+def export_ipv6_tunnel_addresses(segment_dictionary):
+    attribute_list = segment_dictionary['attrs']
+    for elem in attribute_list:
+        if elem[0] == 'SEG6_IPTUNNEL_SRH':
+            my_sid = elem[1]['segs']
+            break
+    for elem in my_sid:
+        print(my_sid)
+
+
 def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
     hostname = socket.gethostname()
     local_ipv4 = socket.gethostbyname(hostname)
@@ -47,7 +57,7 @@ def push_tag(ipv6, ipv4, pos_to_replace):
 
 def sniffing_func():
     event_list = ["RTM_NEWADDR", "RTM_NEWROUTE"]
-    attribute_list = ['RTA_DST', 'IFA_ADDRESS']
+    attribute_list = ['RTA_DST', 'RTA_ENCAP', 'IFA_ADDRESS']
     with IPRoute() as ipr:
         # With IPRoute objects you have to call bind() manually
         ipr.bind()
@@ -57,6 +67,8 @@ def sniffing_func():
                 print(message)
                 if message['event'] in event_list:
                     for attribute in message['attrs']:
+                        if attribute[0] == 'RTA_ENCAP':
+                            export_ipv6_tunnel_addresses(attribute[1])
                         if attribute[0] in attribute_list and attribute[1] not in address_list:
                             print("\n\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****\n\n\n")
                             address_list.append(attribute[1])
@@ -100,7 +112,7 @@ def main():
 if __name__ == '__main__':
     # sniffing_func()
     # add_ipv6('2001:0db8:0:f101::1/64', 'eth0')
-     main()
+    main()
 
-    # pushTag("2001:0db8:0000:f101::1", "192.168.0.1", 2)
-  #  insert_ipv6_with_tag("2001:0db8:0000:f101::1", "/64", 3, "eth0")
+# pushTag("2001:0db8:0000:f101::1", "192.168.0.1", 2)
+#  insert_ipv6_with_tag("2001:0db8:0000:f101::1", "/64", 3, "eth0")
