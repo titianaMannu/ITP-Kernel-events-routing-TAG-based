@@ -13,7 +13,7 @@ def export_ipv6_tunnel_addresses(segment_dictionary):
             my_sid = elem[1]['segs']
             break
     for elem in my_sid:
-        print(my_sid)
+        print(elem)
 
 
 def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
