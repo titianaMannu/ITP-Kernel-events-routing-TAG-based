@@ -151,7 +151,7 @@ def main():
         if len(sys.argv) < 2:
             sniffing_func(position)
         else:
-            sniffing_func(sys.argv[2])
+            sniffing_func(int(sys.argv[2]))
         sys.exit(0)
     elif sys.argv[1] == "-a":
         if len(sys.argv) < 4:
