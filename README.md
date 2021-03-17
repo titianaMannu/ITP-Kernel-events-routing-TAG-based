@@ -61,7 +61,7 @@ Si esegue il tutorial:
 `~$ cd ~/workspace/rose-srv6-tutorial/nets/8routers-isis-ipv6/`
 `~$ sudo bash starter.sh`
 
-![Fig0](images/01.png)
+![Fig0](images/tutorial-srv6/IMG-00.png)
 
 Successivamente si esegue: 
 - `mininet>  gterm r1`
@@ -69,7 +69,7 @@ Successivamente si esegue:
 - `mininet> gterm r8`
 - `mininet>  gterm r8`
 
-per far partire 4 terminali. 
+per far partire 4 terminali e poi spostarsi sulla cartella ITP-PROJECT dove è stato clonato il repo. 
 
 Su un terminale r1 si fa partire il listener: `sudo python3 main.py -s`
 
