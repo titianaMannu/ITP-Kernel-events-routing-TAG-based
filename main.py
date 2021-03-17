@@ -69,6 +69,7 @@ def sniffing_func():
                     for attribute in message['attrs']:
                         if attribute[0] == 'RTA_ENCAP':
                             export_ipv6_tunnel_addresses(attribute[1])
+                            continue
                         if attribute[0] in attribute_list and attribute[1] not in address_list:
                             print("\n\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****\n\n\n")
                             address_list.append(attribute[1])
