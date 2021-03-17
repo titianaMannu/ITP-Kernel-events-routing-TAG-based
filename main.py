@@ -10,21 +10,34 @@ import socket
 position = 3
 
 
-def pop_tag(ipv6, pos_to_replace):
-    if pos_to_replace < 0 or pos_to_replace > 7:
-        print("bad position:: position parameter must be > 0 and <=7")
+def pop_tag(ipv6, tag_position):
+    """
+    pop a tag from the ipv6 address
+
+    :param ipv6:  @string ipv6 hexadecimal representation
+    :param tag_position: @int position of the tag
+    :return: @string ipv4 dot decimal representation
+    """
+    if tag_position < 0 or tag_position >= 7:
+        print("bad position:: position parameter must be > 0 and < 7")
         sys.exit(1)
     ip = ipaddress.IPv6Address(ipv6)
     ip = ip.exploded
     ipv6_list = ip.split(':')
 
-    ipv4_str = ipv6_list[pos_to_replace] + ipv6_list[pos_to_replace + 1]
+    ipv4_str = ipv6_list[tag_position] + ipv6_list[tag_position + 1]
     addr_long = int(ipv4_str, 16)
     ipv4 = str(socket.inet_ntoa(struct.pack(">L", addr_long)))
     return ipv4
 
 
-def export_ipv6_tunnel_addresses(segment_dictionary):
+def export_ipv6_tunnel_addresses(segment_dictionary, tag_position):
+    """
+    Export a list of ipv6 from a SID
+
+    :param tag_position: @int
+    :param segment_dictionary: @dictionary
+    """
     my_sid = []
     attribute_list = segment_dictionary['attrs']
     for elem in attribute_list:
@@ -34,10 +47,18 @@ def export_ipv6_tunnel_addresses(segment_dictionary):
     if len(my_sid) > 0:
         print("***** list of sid *****")
     for elem in my_sid:
-        print("ipv6: " + elem + " tag popped: " + pop_tag(elem, position))
+        print("ipv6: " + elem + " tag popped: " + pop_tag(elem, tag_position))
 
 
 def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
+    """
+    Insert a tagged ipv6 address
+
+    :param ipv6: @string
+    :param prefix: @string
+    :param pos_to_replace: @int
+    :param interface: @string
+    """
     hostname = socket.gethostname()
     local_ipv4 = socket.gethostbyname(hostname)
     print(local_ipv4)
@@ -46,9 +67,17 @@ def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
     add_ipv6_new(new_ipv6.lower() + prefix, interface)
 
 
-def push_tag(ipv6, ipv4, pos_to_replace):
-    if pos_to_replace < 0 or pos_to_replace > 7:
-        print("bad position:: position parameter must be > 0 and <=7")
+def push_tag(ipv6, ipv4, tag_position):
+    """
+    push a tag into the ipv6 address at the position specified
+
+    :param ipv6: @string hexadecimal format
+    :param ipv4: @string dot decimal format
+    :param tag_position: @int
+    :return: @string new tagged-ipv6
+    """
+    if tag_position < 0 or tag_position >= 7:
+        print("bad position:: position parameter must be > 0 and < 7")
         sys.exit(1)
     # ipv6 address need to be normalized
     ip = ipaddress.IPv6Address(ipv6)
@@ -64,7 +93,7 @@ def push_tag(ipv6, ipv4, pos_to_replace):
     res_str = ""
     i = 0
     while i < len(ipv6_list):
-        if i == pos_to_replace:
+        if i == tag_position:
             res_str += hex_str + ":"
             i += 2
         else:
@@ -76,7 +105,12 @@ def push_tag(ipv6, ipv4, pos_to_replace):
     return res_str
 
 
-def sniffing_func():
+def sniffing_func(tag_position):
+    """
+    Listener of Routing Kernel events
+
+    :param tag_position: @int
+    """
     event_list = ["RTM_NEWADDR", "RTM_NEWROUTE"]
     attribute_list = ['RTA_DST', 'RTA_ENCAP', 'IFA_ADDRESS']
     with IPRoute() as ipr:
@@ -89,24 +123,20 @@ def sniffing_func():
                 if message['event'] in event_list:
                     for attribute in message['attrs']:
                         if attribute[0] == 'RTA_ENCAP':
-                            export_ipv6_tunnel_addresses(attribute[1])
+                            export_ipv6_tunnel_addresses(attribute[1], tag_position)
                             continue
                         if attribute[0] in attribute_list and attribute[1] not in address_list:
                             print("\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****\n\n")
                             address_list.append(attribute[1])
 
 
-"""def add_ipv6(address, interface):
-    # commit operation is implied with the exit of the "with" statement
-    with IPDB() as ipdb:
-        with ipdb.interfaces[interface] as my_interface:
-            my_interface.up()
-            my_interface.add_ip(address)
-    ipdb.release()
-"""
-
-
 def add_ipv6_new(ip, interface):
+    """
+    Add an ipv6 address
+
+    :param ip: @string ipv6 address
+    :param interface: @string existing interface
+    """
     os.system("sudo ip -6 addr add " + ip + " dev " + interface)
 
 
@@ -115,10 +145,13 @@ def main():
         print("too few arguments, usage..\n"
               ":: -a <address> <interface> to add an ipv6 address\n"
               ":: -at <address> </prefix> <position-to-fill> <interface> to add an ipv6 address with a tag\n"
-              ":: -s to sniff kernel network events")
+              ":: -s <tag_position> to sniff kernel network events")
         sys.exit(1)
     if sys.argv[1] == "-s":
-        sniffing_func()
+        if len(sys.argv) < 2:
+            sniffing_func(position)
+        else:
+            sniffing_func(sys.argv[2])
         sys.exit(0)
     elif sys.argv[1] == "-a":
         if len(sys.argv) < 4:
@@ -139,9 +172,9 @@ def main():
 
 if __name__ == '__main__':
     # sniffing_func()
-    #add_ipv6_new('5001:7db8:0:f101::1/64', 'eth0')
+    # add_ipv6_new('5001:7db8:0:f101::1/64', 'eth0')
     main()
 # pop_tag("3901:0db8:0000:C0A8:0013:0000:0000:0001", 3)
 
-# pushTag("2001:0db8:0000:f101::1", "192.168.0.1", 2)
+#  print(push_tag("2001:0db8:0000:f101::1", "192.168.0.1", 7))
 #  insert_ipv6_with_tag("2001:0db8:0000:f101::1", "/64", 3, "eth0")
