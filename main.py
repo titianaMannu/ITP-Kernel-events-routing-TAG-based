@@ -1,11 +1,11 @@
+import binascii
+import ipaddress
 import os
+import socket
 import struct
 import sys
 
-from pyroute2 import IPRoute, IPDB
-import ipaddress
-import binascii
-import socket
+from pyroute2 import IPRoute
 
 position = 3
 
