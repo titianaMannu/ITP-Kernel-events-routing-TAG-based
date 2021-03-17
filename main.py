@@ -1,9 +1,27 @@
+import struct
 import sys
 
 from pyroute2 import IPRoute, IPDB
 import ipaddress
 import binascii
 import socket
+
+position = 3
+
+
+def pop_tag(ipv6, pos_to_replace):
+    if pos_to_replace < 0 or pos_to_replace > 7:
+        print("bad position:: position parameter must be > 0 and <=7")
+        sys.exit(1)
+    ip = ipaddress.IPv6Address(ipv6)
+    ip = ip.exploded
+    ipv6_list = ip.split(':')
+
+    ipv4_str = ipv6_list[pos_to_replace] + ipv6_list[pos_to_replace + 1]
+    addr_long = int(ipv4_str, 16)
+    ipv4 = str(socket.inet_ntoa(struct.pack(">L", addr_long)))
+    print(ipv4)
+    return ipv4
 
 
 def export_ipv6_tunnel_addresses(segment_dictionary):
@@ -13,9 +31,10 @@ def export_ipv6_tunnel_addresses(segment_dictionary):
         if elem[0] == 'SEG6_IPTUNNEL_SRH':
             my_sid = elem[1]['segs']
             break
-    print("***** list of sid *****")
+    if len(my_sid) > 0:
+        print("***** list of sid *****")
     for elem in my_sid:
-        print(elem)
+        print("ipv6: " + elem + " tag popped: " + pop_tag(elem, position))
 
 
 def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
@@ -87,8 +106,8 @@ def add_ipv6(address, interface):
 
 def main():
     if len(sys.argv) < 2:
-        print("too few arguments\n"
-              ":: usage -a <address> <interface> to add an ipv6 address\n"
+        print("too few arguments, usage..\n"
+              ":: -a <address> <interface> to add an ipv6 address\n"
               ":: -at <address> </prefix> <position-to-fill> <interface> to add an ipv6 address with a tag\n"
               ":: -s to sniff kernel network events")
         sys.exit(1)
@@ -116,6 +135,7 @@ if __name__ == '__main__':
     # sniffing_func()
     # add_ipv6('2001:0db8:0:f101::1/64', 'eth0')
     main()
+# pop_tag("3901:0db8:0000:C0A8:0013:0000:0000:0001", 3)
 
 # pushTag("2001:0db8:0000:f101::1", "192.168.0.1", 2)
 #  insert_ipv6_with_tag("2001:0db8:0000:f101::1", "/64", 3, "eth0")
