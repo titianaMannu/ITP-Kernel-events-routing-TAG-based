@@ -1,3 +1,4 @@
+import os
 import struct
 import sys
 
@@ -42,7 +43,7 @@ def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
     print(local_ipv4)
     new_ipv6 = push_tag(ipv6, local_ipv4, pos_to_replace)
     print(new_ipv6)
-    add_ipv6(new_ipv6 + prefix, interface)
+    add_ipv6_new(new_ipv6.lower() + prefix, interface)
 
 
 def push_tag(ipv6, ipv4, pos_to_replace):
@@ -95,12 +96,18 @@ def sniffing_func():
                             address_list.append(attribute[1])
 
 
-def add_ipv6(address, interface):
+"""def add_ipv6(address, interface):
     # commit operation is implied with the exit of the "with" statement
     with IPDB() as ipdb:
         with ipdb.interfaces[interface] as my_interface:
             my_interface.up()
             my_interface.add_ip(address)
+    ipdb.release()
+"""
+
+
+def add_ipv6_new(ip, interface):
+    os.system("sudo ip -6 addr add " + ip + " dev " + interface)
 
 
 def main():
@@ -118,7 +125,7 @@ def main():
             print("too few arguments:: usage -a <address/prefix> <interface> to add an ipv6 address or type -s to "
                   "sniff kernel network events")
             sys.exit(1)
-        add_ipv6(sys.argv[2], sys.argv[3])
+        add_ipv6_new(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "-at":
         if len(sys.argv) < 5:
             print("too few arguments:: usage -at <address> </prefix> <position-to-fill> <interface> to add an ipv6 "
@@ -132,7 +139,7 @@ def main():
 
 if __name__ == '__main__':
     # sniffing_func()
-    # add_ipv6('2001:0db8:0:f101::1/64', 'eth0')
+    #add_ipv6_new('5001:7db8:0:f101::1/64', 'eth0')
     main()
 # pop_tag("3901:0db8:0000:C0A8:0013:0000:0000:0001", 3)
 
