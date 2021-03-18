@@ -126,7 +126,10 @@ def sniffing_func(tag_position):
                             export_ipv6_tunnel_addresses(attribute[1], tag_position)
                             continue
                         if attribute[0] in attribute_list and attribute[1] not in address_list:
-                            print("\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****\n\n")
+                            print("\n\n***** A new ipv6 address has being added: " + attribute[1] + "*****")
+                            ipv4 = pop_tag(attribute[1],
+                                           tag_position)  # attribute[1] is a string representation of an ipv6
+                            print("try to execute pop operation:: " + ipv4 + "\n\n")
                             address_list.append(attribute[1])
 
 
