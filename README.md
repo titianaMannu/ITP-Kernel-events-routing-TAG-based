@@ -34,8 +34,10 @@ Lo script in python contiene 6 funzioni principali:
 
 ### Modalità d'uso
 
-- `~$ sudo python3 main.py -s` : per far partire il listener. Dal momento in cui esso sarà attivo si metterà in ascolto di TUTTI gli eventi di routing
+- `~$ sudo python3 main.py -s <tag position>` : per far partire il listener. Dal momento in cui esso sarà attivo si metterà in ascolto di TUTTI gli eventi di routing
 ma stamperà in modo formattato solamente gli indirizzi corrispondenti agli eventi `RTM_NEWADDR` e `RTM_NEWROUTE`.
+    
+  - la posizione del tag deve essere specificata coerentemente con il protocollo stabilito
  
   - e. g. `***** A new ipv6 address has being added: 2001:db8:0:f101::5*****`
 
@@ -71,50 +73,51 @@ Successivamente si esegue:
 
 per far partire 4 terminali e poi spostarsi sulla cartella ITP-PROJECT dove è stato clonato il repo. 
 
-Su un terminale r1 si fa partire il listener: `sudo python3 main.py -s`
+Su un terminale r1 si fa partire il listener: `sudo python3 main.py -s 4`
+  - il 4 serve per specificare la posizione del tag stabilita dal protocollo
+  - in alternativa eseguire `sudo python3 main.py -sd 4` per eseguire in DEBUG mode
 
-Su un terminale r8 si fa partire il listener: `sudo python3 main.py -s`
+Su un terminale r8 si fa partire il listener: `sudo python3 main.py -s 4`
 
 In questo modo i due nodi sono in ascolto!
 
 Sul secondo terminale r8 si aggiunge un tagged-ipv6 con il seguente comando:
-`~$ sudo python3 main.py -at 5001:7db8:0:f101::1 /64 3 r8-r6`
+`~$ sudo python3 main.py -at 5001:7db8:0:f101::1 /128 4 r8-r6 192.168.57.1`
+   - l'indirizzo ipv4 da incapsulare nell'ipv6 può non essere specificato ed in tal caso ne verrà selezionato uno corrispondente al nodo corrente in automatico.
 
-![Fig1](images/tutorial-srv6/IMG-01.png)
+![Fig1](images/tutorial-srv6/ksnip_20210320-164426.png)
 
 Come si può vedere l'indirizzo che viene inserito è stato modificato inserendo un tag.
 
 A questo punto si inserisce una rotta seguendo il [tutorial](https://docs.google.com/document/d/18bVMeJ9SHgaFQwcIPgBOWBgP6ayUpyNNFNqRL0MhWgo/edit#)
 modificando i parametri in modo adeguato per adattarlo al nostro caso di studio.
 
-Sul nodo r8:
-- `~# ip -6 route add fd00:0:11::2 encap seg6 mode encap segs fcff:4::1,5001:7db8:0:7f00:101::1 dev r8-r6`
+Sul nodo r8 eseguire:
+- `~# ip -6 route add fd00:0:11::2 encap seg6 mode encap segs fcff:4::1,5001:7db8:0:f101:c0a8:3901:0:1 dev r8-r6`
 
 
-- `~# ip -6 route add 5001:7db8:0:7f00:101::1 encap seg6local action End.DT6 table main dev r8-r6`
+- `~# ip -6 route add 5001:7db8:0:f101:c0a8:3901:0:1 encap seg6local action End.DT6 table main dev r8-r6`
 
-![fig2](images/tutorial-srv6/IMG-02.png)
+![fig2](images/tutorial-srv6/ksnip_20210320-164559.png)
 
-Sul nodo r1: 
-- `~# ip -6 route add fd00:0:81::2 encap seg6 mode encap segs fcff:4::1,5001:7db8:0:
-7f00:101::1 dev r1-r2`
+Sul nodo r1 eseguire: 
+
+- `~# ip -6 route add fd00:0:81::2 encap seg6 mode encap segs fcff:4::1,5001:7db8:0:f101:c0a8:3901:0:1 dev r1-r2`
 
 
-- `~# ip -6 route add 5001:7db8:0:7f00:101::1 encap seg6local action End.DT6 table m
-ain dev r1-r2`
+- `~# ip -6 route add 5001:7db8:0:f101:c0a8:3901:0:1 encap seg6local action End.DT6 table main dev r1-r2`
 
-![fig5](images/tutorial-srv6/IMG-05.png)
 
 Dopo aver aggiornato le rotte i listener che avevamo fatto partire sugli altri 2 terminali avranno rilevato 
 il cambiamento e stampato dei risultati.
 È stato effettuato anche il ping per controllare che il canale fosse stabilito in modo corretto.
 
-![Fig3](images/tutorial-srv6/IMG-03.png)
+![Fig3](images/tutorial-srv6/ksnip_20210320-164531.png)
 
-![Fig4](images/tutorial-srv6/IMG-04.png)
+![Fig4](images/tutorial-srv6/ksnip_20210320-164557.png)
 
 A seguito dell'aggiunta di nuove rotte entrambi i listener hanno stampato informazioni analoghe.
-In particolare il tag che avevamo inserito è stato riconosciuto (p.s. Il test effettuato su nodo locale usa localhost
-ma se si prova ad inserire tagged-ip su macchina fisica e non virtuale ad esempio potrebbe essere stampato: 192.168.0.19).
+In particolare il tag che avevamo inserito è stato riconosciuto (p.s. Il test effettuato su VM usa localhost e se non si specifica ipv4 
+viene selezionato quello locale).
 ****
 Per l'altro indirizzo del SID viene stampato 0.0.0.0 in quanto non avevamo inserito il tag per esso.
