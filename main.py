@@ -188,7 +188,7 @@ def main():
                   "to add an ipv6 with a tag")
             sys.exit(1)
         ipv4_tag = None
-        if len(sys.argv) > 5:
+        if len(sys.argv) > 6:
             ipv4_tag = sys.argv[6]
         if sys.argv[1] == "-atd":
             debug = True
