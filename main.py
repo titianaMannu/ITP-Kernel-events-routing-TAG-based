@@ -10,6 +10,11 @@ from pyroute2 import IPRoute
 position = 3
 
 
+def personal_print(message, debug_mode):
+    if debug_mode:
+        print(message)
+
+
 def pop_tag(ipv6, tag_position):
     """
     pop a tag from the ipv6 address
@@ -50,27 +55,35 @@ def export_ipv6_tunnel_addresses(segment_dictionary, tag_position):
         print("ipv6: " + elem + " tag popped: " + pop_tag(elem, tag_position))
 
 
-def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface):
+def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface, debug, ipv4_tag):
     """
     Insert a tagged ipv6 address
 
+    :param ipv4_tag:
+    :param debug:
     :param ipv6: @string
     :param prefix: @string
     :param pos_to_replace: @int
     :param interface: @string
     """
-    hostname = socket.gethostname()
-    local_ipv4 = socket.gethostbyname(hostname)
-    print(local_ipv4)
-    new_ipv6 = push_tag(ipv6, local_ipv4, pos_to_replace)
-    print(new_ipv6)
+    ""
+    if ipv4_tag is None:
+        hostname = socket.gethostname()
+        local_ipv4 = socket.gethostbyname(hostname)
+    else:
+        local_ipv4 = ipv4_tag  # todo implement a control on the format of the tag passed
+
+    personal_print("local ip address: " + local_ipv4, debug)
+    new_ipv6 = push_tag(ipv6, local_ipv4, pos_to_replace, debug)
+    personal_print("this is the new ipv6: " + new_ipv6, debug)
     add_ipv6_new(new_ipv6.lower() + prefix, interface)
 
 
-def push_tag(ipv6, ipv4, tag_position):
+def push_tag(ipv6, ipv4, tag_position, debug):
     """
     push a tag into the ipv6 address at the position specified
 
+    :param debug:
     :param ipv6: @string hexadecimal format
     :param ipv4: @string dot decimal format
     :param tag_position: @int
@@ -89,7 +102,7 @@ def push_tag(ipv6, ipv4, tag_position):
     hex_str = hex_str[:4] + ":" + hex_str[4:]
     # ipv6 tag push
     ipv6_list = ip.split(':')
-    print(ipv6_list)
+    personal_print(ipv6_list, debug)
     res_str = ""
     i = 0
     while i < len(ipv6_list):
@@ -105,10 +118,11 @@ def push_tag(ipv6, ipv4, tag_position):
     return res_str
 
 
-def sniffing_func(tag_position):
+def sniffing_func(tag_position, debug):
     """
     Listener of Routing Kernel events
 
+    :param debug: @boolean
     :param tag_position: @int
     """
     event_list = ["RTM_NEWADDR", "RTM_NEWROUTE"]
@@ -119,7 +133,7 @@ def sniffing_func(tag_position):
         address_list = []
         while True:
             for message in ipr.get():
-                print(message)
+                personal_print(message, debug)
                 if message['event'] in event_list:
                     for attribute in message['attrs']:
                         if attribute[0] == 'RTA_ENCAP':
@@ -144,17 +158,23 @@ def add_ipv6_new(ip, interface):
 
 
 def main():
+    debug = False
     if len(sys.argv) < 2:
         print("too few arguments, usage..\n"
-              ":: -a <address> <interface> to add an ipv6 address\n"
-              ":: -at <address> </prefix> <position-to-fill> <interface> to add an ipv6 address with a tag\n"
-              ":: -s <tag_position> to sniff kernel network events")
+              ":: -a  <address> <interface> to add an ipv6 address\n"
+              ":: -at <address> </prefix> <position-to-fill> <interface> <ipv4-optional> to add an ipv6 address with a tag\n"
+              ":: -atd <address> </prefix> <position-to-fill> <interface> <ipv4-optional> to add an ipv6 address with a tag in "
+              "DEBUG_MODE\n "
+              ":: -s <tag_position> to sniff kernel network events"
+              ":: -sd <tag_position> to sniff kernel network events in DEBUG_MODE")
         sys.exit(1)
-    if sys.argv[1] == "-s":
+    if sys.argv[1] == "-s" or sys.argv[1] == "-sd":
+        if sys.argv[1] == "-sd":
+            debug = True
         if len(sys.argv) < 2:
-            sniffing_func(position)
+            sniffing_func(position, debug)
         else:
-            sniffing_func(int(sys.argv[2]))
+            sniffing_func(int(sys.argv[2]), debug)
         sys.exit(0)
     elif sys.argv[1] == "-a":
         if len(sys.argv) < 4:
@@ -162,12 +182,17 @@ def main():
                   "sniff kernel network events")
             sys.exit(1)
         add_ipv6_new(sys.argv[2], sys.argv[3])
-    elif sys.argv[1] == "-at":
+    elif sys.argv[1] == "-at" or sys.argv[1] == "-atd":
         if len(sys.argv) < 5:
-            print("too few arguments:: usage -at <address> </prefix> <position-to-fill> <interface> to add an ipv6 "
-                  "address with a tag")
+            print("too few arguments:: usage -at <address> </prefix> <position-to-fill> <interface> <ipv4-optional> "
+                  "to add an ipv6 with a tag")
             sys.exit(1)
-        insert_ipv6_with_tag(sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5])
+        ipv4_tag = None
+        if len(sys.argv) > 5:
+            ipv4_tag = sys.argv[6]
+        if sys.argv[1] == "-atd":
+            debug = True
+        insert_ipv6_with_tag(sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5], debug, ipv4_tag)
     else:
         print("bad usage:: usage -a <address> <interface> to add an ipv6 address or type -s to sniff "
               "kernel network events")
