@@ -59,8 +59,8 @@ def insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface, debug, ipv4_ta
     """
     Insert a tagged ipv6 address
 
-    :param ipv4_tag:
-    :param debug:
+    :param ipv4_tag:@string optional
+    :param debug: @boolean
     :param ipv6: @string
     :param prefix: @string
     :param pos_to_replace: @int
@@ -83,7 +83,7 @@ def push_tag(ipv6, ipv4, tag_position, debug):
     """
     push a tag into the ipv6 address at the position specified
 
-    :param debug:
+    :param debug: @boolean
     :param ipv6: @string hexadecimal format
     :param ipv4: @string dot decimal format
     :param tag_position: @int
