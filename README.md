@@ -1,5 +1,9 @@
 # ITP-PROJECT
 
+[TOC]
+
+
+
 ## Obiettivo 
 
 Realizzazione di un listener in python per eventi-kernel di routing e creazione di segmenti con sid associati a dei tag. 
@@ -20,15 +24,15 @@ vengono inseriti dei bytes nell'ipv6 in determinate posizioni configurabili.
 
 Lo script in python contiene 6 funzioni principali: 
 
-- `sniffing_func()`: 
+- `sniffing_func(tag_position, debug)`: 
     - listener di eventi kernel
-- `add_ipv6_new(address, interface)`
+- `add_ipv6_new(ip, interface)`
     - aggiunge un indirizzo ipv6 all'interfaccia specificata senza aggiungere un tag
-- `push_tag(ipv6, ipv4, pos_to_replace)`
+- `push_tag(ipv6, ipv4, pos_to_replace, debug)`
     - inserisce un tag all'interno dell'indirizzo ipv6
 - `pop_tag(ipv6, pos_to_replace)`
     - estrapola il tag dall'indirizzo ipv6
-- `insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface)`
+- `insert_ipv6_with_tag(ipv6, prefix, pos_to_replace, interface, debug, ipv4_tag)`
     - aggiunge un indirizzo ipv6 all'interfaccia specificata aggiungendo un tag
 - `main()`
 
@@ -36,15 +40,14 @@ Lo script in python contiene 6 funzioni principali:
 
 - `~$ sudo python3 main.py -s <tag position>` : per far partire il listener. Dal momento in cui esso sarà attivo si metterà in ascolto di TUTTI gli eventi di routing
 ma stamperà in modo formattato solamente gli indirizzi corrispondenti agli eventi `RTM_NEWADDR` e `RTM_NEWROUTE`.
-    
+  
   - la posizione del tag deve essere specificata coerentemente con il protocollo stabilito
- 
+
   - e. g. `***** A new ipv6 address has being added: 2001:db8:0:f101::5*****`
 
 
 - `~$ sudo python3 main.py -a 2001:0db8:0:f101::1/64 eth0` : per aggiungere un ipv6 ad eth0 (: deve essere inerfaccia valida). 
 Il medesimo effetto si può ottenere eseguendo`~$ sudo ip -6 addr add 2001:0db8:0:f101::1/64 dev eth0`.
-  
   
 - `~$ sudo python3 main.py -at 2001:0db8:0:f101::1 /64 4 eth0`: per aggiungere un ipv6 con tag. In particolare il tag 
 nell'implementazione corrente corrisponde a ipv4 del nodo corrente nella forma esadecimale "xxxx:yyyy". Questi 4 bytes 
